@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Invitación Dinámica</title>
+
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,100..900;1,100..900&family=Parisienne&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Librerías -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Parisienne", cursive;
+      }
+      #controles {
+        max-width: 400px;
+        margin: 20px auto;
+        text-align: center;
+      }
+      #controles label {
+        display: block;
+        margin: 10px 0;
+        font-weight: bold;
+      }
+      #controles input {
+        width: 100%;
+        padding: 6px;
+        font-size: 1em;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      #btn-generar {
+        margin-top: 12px;
+        padding: 8px 16px;
+        background: #d47;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      #btn-generar:hover {
+        background: #b03550;
+      }
+
+      .invitacion {
+        position: relative;
+        width: 800px; /* ancho final*/
+        height: 1000px; /* alto final*/
+        margin: 20px auto;
+        /* IMPORTANTE: si tu imagen está CORS, añade `crossorigin="anonymous"` en <img> o usa inline */
+        background: url("/img/invitacion.png") center/cover no-repeat;
+        color: #efa0a1;
+      }
+      .invitacion #txt-nombre {
+        position: absolute;
+        top: 520px;
+        width: 100%;
+        font-size: 100px;
+        text-align: center;
+      }
+      .invitacion #txt-cantidad {
+        position: absolute;
+        top: 722px;
+        width: 100%;
+        font-size: 20px;
+        text-align: left;
+        left: 120px;
+        color: #a66869;
+        font-family: ruda-normal;
+      }
+      /* Aquí defines la posición exacta del QR: */
+      .invitacion #qr-code {
+        position: absolute;
+        bottom: 5px; /* distancia desde abajo */
+        right: 680px; /* distancia desde la derecha */
+        width: 100px;
+        height: 100px;
+      }
+      .ruda-normal {
+        font-family: "Ruda", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: 10;
+        font-style: oblique;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="controles">
+      <label for="nombre">Nombre del invitado:</label>
+      <input id="nombre" type="text" placeholder="Ej. Ana Pérez" />
+
+      <label for="cantidad">Cantidad de invitados:</label>
+      <input id="cantidad" type="number" min="0" placeholder="Ej. 3" />
+
+      <button id="btn-generar">Generar Invitación</button>
+    </div>
+
+    <div id="invitacion" class="invitacion">
+      <div id="txt-nombre">[Nombre]</div>
+      <div id="txt-cantidad">[Cantidad]</div>
+      <div id="qr-code"></div>
+    </div>
+
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const btn = document.getElementById("btn-generar");
+        const nombreIn = document.getElementById("nombre");
+        const cantIn = document.getElementById("cantidad");
+        const txtNombre = document.getElementById("txt-nombre");
+        const txtCantidad = document.getElementById("txt-cantidad");
+        const qrDiv = document.getElementById("qr-code");
+        const invitDiv = document.getElementById("invitacion");
+
+        btn.addEventListener("click", () => {
+          // 1) Actualizar datos
+          const nombre = nombreIn.value.trim() || "[Nombre]";
+          const cant = cantIn.value.trim() || "0";
+          txtNombre.textContent = nombre;
+          txtCantidad.textContent = ` ${cant}`;
+
+          // 2) Generar QR rosado
+          qrDiv.innerHTML = "";
+          const filename = `invitacion_${nombre.replace(/\s+/g, "_")}.png`;
+          const urlPNG = `https://tusitio.com/invitaciones/${filename}`;
+          new QRCode(qrDiv, {
+            text: urlPNG,
+            width: 100,
+            height: 100,
+            colorDark: "#efa0a1",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H,
+          });
+
+          // 3) Capturar a PNG de alta resolución
+          html2canvas(invitDiv, {
+            zoom: 10,
+            scale: 4, // 4× más píxeles
+            useCORS: true,
+            backgroundColor: null,
+          })
+            .then((canvas) => {
+              // 4) Forzar descarga como PNG
+              canvas.toBlob(
+                (blob) => {
+                  const link = document.createElement("a");
+                  link.href = URL.createObjectURL(blob);
+                  link.download = filename;
+                  link.click();
+                  URL.revokeObjectURL(link.href);
+                },
+                "image/png",
+                1 /* calidad 100% */
+              );
+            })
+            .catch((err) => console.error(err));
+        });
+      });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+  </body>
+</html>
